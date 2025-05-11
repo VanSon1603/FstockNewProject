@@ -22,7 +22,7 @@ import NewOrderPage from "../pages/AdminPage.jsx/Order/NewOrderPage.jsx";
 import OrderDetailPage from "../pages/OrderDetailPage.jsx";
 import OrderManagePage from "../pages/AdminPage.jsx/Order/OrderManagePage.jsx";
 import AccountMangementPage from "../pages/AdminPage.jsx/Account/AccountManagementPage.jsx";
-import ErrorPage from "../pages/ErrorPage.jsx";
+import LoginCallBackGooglePage from "../pages/LoginCallBackGooglePage.jsx";
 
 const routers = createBrowserRouter([
   {
@@ -46,9 +46,10 @@ const routers = createBrowserRouter([
     element: <LayoutUser Component={RegisterPage}></LayoutUser>,
   },
   {
-    path: "/error",
-    element: <LayoutUser Component={ErrorPage}></LayoutUser>,
+    path: "/login/callback-google",
+    element: <LayoutUser Component={LoginCallBackGooglePage}></LayoutUser>,
   },
+
   {
     path: "/cart",
     element: (

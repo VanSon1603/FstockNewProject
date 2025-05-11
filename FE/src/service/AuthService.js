@@ -26,3 +26,10 @@ export const logoutApi = (data) => {
 export const introspectToken = (token) => {
     return api.post(`/auth/introspect`, token);
 }
+export const loginWithGoogle = (code, redirectUri, codeVerifier) => {
+    return api.post(`/auth/login-google`, {
+        authorizeCode : code,
+        redirectUri : redirectUri,
+        codeVerifier: codeVerifier
+    });
+}

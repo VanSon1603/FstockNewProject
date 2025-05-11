@@ -1,9 +1,6 @@
 package com.example.Fstock.controller;
 
-import com.example.Fstock.dto.request.AuthenticationRequest;
-import com.example.Fstock.dto.request.IntrospectRequest;
-import com.example.Fstock.dto.request.LogoutRequest;
-import com.example.Fstock.dto.request.RefreshTokenRequest;
+import com.example.Fstock.dto.request.*;
 import com.example.Fstock.dto.response.ApiResponse;
 import com.example.Fstock.dto.response.AuthenticationResponse;
 import com.example.Fstock.dto.response.IntrospectResponse;
@@ -66,6 +63,17 @@ public class AuthenticationController {
         return ResponseEntity.ok
                 (ApiResponse.<AuthenticationResponse>builder()
                         .message("Logout success")
+                        .build()
+                );
+
+    }
+    @PostMapping("/login-google")
+    public ResponseEntity<ApiResponse> callbackGoogle (@RequestBody LoginWithGoogleRequest loginWithGoogleRequest) throws ParseException, JOSEException {
+        AuthenticationResponse authenticationResponse = authenticationService.loginWithGoogle(loginWithGoogleRequest);
+        return ResponseEntity.ok
+                (ApiResponse.<AuthenticationResponse>builder()
+                        .data(authenticationResponse)
+                        .message("Login success")
                         .build()
                 );
 

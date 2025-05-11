@@ -157,7 +157,7 @@ export const ProfilePage = () => {
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
-    
+
     if (file) {
       setImage(URL.createObjectURL(file));
     }
@@ -248,18 +248,21 @@ export const ProfilePage = () => {
                     >
                       <i className="fa fa-file"></i>Orders
                     </button>
-                    <button
-                      className="nav-link"
-                      id="nav-password-tab"
-                      data-bs-toggle="tab"
-                      data-bs-target="#nav-password"
-                      type="button"
-                      role="tab"
-                      aria-controls="nav-password"
-                      aria-selected="false"
-                    >
-                      <i className="fa fa-lock"></i>Change Password
-                    </button>
+                    {userData?.accountType === "LOCAL" && (
+                      <button
+                        className="nav-link"
+                        id="nav-password-tab"
+                        data-bs-toggle="tab"
+                        data-bs-target="#nav-password"
+                        type="button"
+                        role="tab"
+                        aria-controls="nav-password"
+                        aria-selected="false"
+                      >
+                        <i className="fa fa-lock"></i>Change Password
+                      </button>
+                    )}
+
                     <button
                       className="nav-link"
                       onClick={(e) => handleLogout(e)}

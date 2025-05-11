@@ -1,5 +1,6 @@
 package com.example.Fstock.entity;
 
+import com.example.Fstock.enums.AccountType;
 import com.example.Fstock.enums.Gender;
 import jakarta.persistence.*;
 import lombok.*;
@@ -15,7 +16,6 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int userId;
-
     @Column( nullable = false)
     private String firstName;
     @Column( nullable = false)
@@ -24,19 +24,19 @@ public class User {
     private String userName;
     @Column( nullable = false)
     private String email;
-    @Column( nullable = false)
+    @Column( nullable = true)
     private String password;
-    @Column( nullable = false)
+    @Column( nullable = true)
     private String phone;
-
     @Column( nullable = true)
     private String imgUrlDisplay;
-
     @Column( nullable = false)
     @Enumerated(EnumType.STRING)
     private Gender gender;
     @Column( nullable = false)
     private Boolean active;
+    @Enumerated(EnumType.STRING)
+    private AccountType accountType;
 
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, mappedBy = "user", orphanRemoval = true)
     private List<Order> orders;

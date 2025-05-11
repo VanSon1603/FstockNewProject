@@ -61,6 +61,9 @@ const CheckOutPage = () => {
     orderNotes: {
       required: "Note must not be blank",
     },
+    phone: {
+      required: "Phone number must not be blank",
+    }
   };
 
   const createOrderId = (len) => {
@@ -78,7 +81,7 @@ const CheckOutPage = () => {
       orderId: "",
       recipientName: formData.recipientName,
       note: formData.orderNotes,
-      phoneNumber: userData.phone,
+      phoneNumber:formData.phone,
       email: userData.email,
       specificAddress: formData.specificAddress,
       provinceName: provinceSelected.ProvinceName,
@@ -417,8 +420,8 @@ const CheckOutPage = () => {
                           <input
                             type="text"
                             placeholder="Phone number"
-                            value={userData.phone}
-                          />
+                            {...register("phone", orderOptions.phone)}
+                            />
                         </div>
                       </div>
                     </div>

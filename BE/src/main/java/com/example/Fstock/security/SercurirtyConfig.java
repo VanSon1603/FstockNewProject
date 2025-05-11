@@ -27,14 +27,15 @@ public class SercurirtyConfig {
     private String secretKey ;
 
     private final String[] PUBLIC_ENDPOINTS = {
-            "api/users/**",
-            "api/auth/token",
-            "api/auth/introspect",
-            "api/auth/refresh",
-            "api/auth/logout",
-            "api/products/**",
-            "api/categories/**",
-            "api/orders/vn-pay-callback",
+            "/api/users/**",
+            "/api/auth/token",
+            "/api/auth/introspect",
+            "/api/auth/refresh",
+            "/api/auth/logout",
+            "/api/auth/login-google",
+            "/api/products/**",
+            "/api/categories/**",
+            "/api/orders/vn-pay-callback",
 
 
     };
@@ -49,10 +50,10 @@ public class SercurirtyConfig {
                 )
                 .oauth2ResourceServer(oauth2 ->
                         oauth2.jwt(jwtConfigurer ->
-                                        jwtConfigurer.decoder(jwtDecoder())
-                                                .jwtAuthenticationConverter(jwtAuthenticationConverter()))
+                                jwtConfigurer.decoder(jwtDecoder())
+                                        .jwtAuthenticationConverter(jwtAuthenticationConverter()))
 
-                        )
+                )
                 .httpBasic(Customizer.withDefaults()); // Thay thế cho httpBasic() // Sử dụng Basic Auth
         return http.build();
     }

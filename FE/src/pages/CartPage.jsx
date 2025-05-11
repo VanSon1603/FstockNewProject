@@ -2,7 +2,6 @@ import { useContext, useEffect, useState } from "react";
 import Banner from "../components/user/Banner";
 import { updateCart } from "../service/CartService";
 import AuthContext from "../contexts/AuthContext";
-import Loading from "../components/user/Loading";
 import { ToastContext } from "../contexts/ToastContext";
 import { CartContext } from "../contexts/CartContext";
 import { useNavigate } from "react-router-dom";
@@ -70,10 +69,6 @@ const CartPage = () => {
         toast.success("Update cart successfully");
     }
     
-
-    if(!cartData) {
-        return <Loading></Loading>
-    }
     return (
         <>
             <Banner pageName={"Your Cart"}></Banner>

@@ -1,40 +1,55 @@
 package com.example.Fstock.service.Serviceimpl;
 
-import com.example.Fstock.dto.request.AuthenticationRequest;
-import com.example.Fstock.dto.request.IntrospectRequest;
-import com.example.Fstock.dto.request.LogoutRequest;
-import com.example.Fstock.dto.request.RefreshTokenRequest;
+import com.example.Fstock.dto.request.*;
 import com.example.Fstock.dto.response.AuthenticationResponse;
 import com.example.Fstock.dto.response.IntrospectResponse;
 import com.example.Fstock.entity.InvalidatedToken;
+import com.example.Fstock.entity.Roles;
 import com.example.Fstock.entity.User;
+import com.example.Fstock.entity.User_Roles;
+import com.example.Fstock.enums.AccountType;
+import com.example.Fstock.enums.Gender;
+import com.example.Fstock.exception.BadRequestException;
 import com.example.Fstock.exception.NotFoundException;
 import com.example.Fstock.exception.UnAuthorizedException;
 import com.example.Fstock.responsitory.InvalidatedTokenRepository;
+import com.example.Fstock.responsitory.RolesRepository;
 import com.example.Fstock.responsitory.UserRepository;
+import com.example.Fstock.responsitory.User_RoleRepository;
 import com.example.Fstock.service.Service.AuthenticationService;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.gson.GsonFactory;
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 
+import io.github.cdimascio.dotenv.Dotenv;
+import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestTemplate;
 
+import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.text.ParseException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Date;
-import java.util.Optional;
-import java.util.StringJoiner;
-import java.util.UUID;
+import java.util.*;
 
 @Slf4j
 @Service
@@ -52,7 +67,10 @@ public class AuthenticationServiceimpl implements AuthenticationService {
 
     @Value("${jwt.refresh-duration}")
     protected String refreshTokenDuration; // thời gian refresh token
-
+    @Autowired
+    private RolesRepository rolesRepository;
+    @Autowired
+    private User_RoleRepository userRoleRepository;
 
 
     @Override
@@ -202,6 +220,95 @@ public class AuthenticationServiceimpl implements AuthenticationService {
         }
         return stringJoiner.toString();
     }
+    @Override
+    @Transactional
+    //login with google request
+    public AuthenticationResponse loginWithGoogle(LoginWithGoogleRequest loginWithGoogleRequest) throws ParseException, JOSEException {
+
+        Dotenv dotenv = Dotenv.load();
+        String clientId = dotenv.get("GOOGLE_CLIENT_ID");
+        String clientSecret = dotenv.get("GOOGLE_CLIENT_SECRET");
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+        MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
+        body.add("grant_type", "authorization_code");
+        body.add("client_id", clientId);
+        body.add("client_secret", clientSecret);
+        body.add("code", loginWithGoogleRequest.getAuthorizeCode());
+        body.add("redirect_uri", loginWithGoogleRequest.getRedirectUri());
+        body.add("code_verifier", loginWithGoogleRequest.getCodeVerifier());
+
+        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(body, httpHeaders);
+        String tokenEndpoint = "https://oauth2.googleapis.com/token";
+        RestTemplate restTemplate = new RestTemplate();
+        Map response = restTemplate.postForObject(tokenEndpoint, request, Map.class);
+        // Lấy ID token từ response
+        String idTokenString = (String) response.get("id_token");
+        if (idTokenString == null) {
+            throw new UnAuthorizedException("Không nhận được ID token từ Google");
+        }
+        // Xác minh ID token
+        GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new GsonFactory())
+                .setAudience(Collections.singletonList(clientId))
+                .build();
+        GoogleIdToken googleIdToken = null;
+        try {
+            googleIdToken = verifier.verify(idTokenString);
+        } catch (GeneralSecurityException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        if (googleIdToken == null) {
+            throw new UnAuthorizedException("Invalid Google ID token");
+        }
+
+        // Lấy thông tin người dùng từ ID token
+        GoogleIdToken.Payload payload = googleIdToken.getPayload();
+        String email = payload.getEmail();
+        String token = null;
+        if (userRepository.existsByEmail(email)){
+            User user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new NotFoundException("User not found"));
+            token = generateJwtToken(user);
+        }else {
+            User newUser = new User();
+            newUser.setEmail(email);
+            newUser.setGender(Gender.OTHER);
+            newUser.setFirstName((String) payload.get("given_name"));
+            newUser.setLastName((String) payload.get("family_name"));
+            newUser.setUserName((String) payload.get("name"));
+            newUser.setActive(true);
+            newUser.setAccountType(AccountType.SOCIAL);
+            newUser.setImgUrlDisplay((String) payload.get("picture"));
+            User savedUser = userRepository.save(newUser);
+            if (savedUser == null) {
+                throw new BadRequestException("Create user with google account failed");
+            }
+            if(savedUser != null) {
+                if (savedUser.getUserRoles() == null) {
+                    savedUser.setUserRoles(new ArrayList<>());
+                }
+                // Tạo và lưu User_Roles
+                User_Roles userRoles = new User_Roles();
+                userRoles.setUser(savedUser);
+                Roles role = rolesRepository.findByRoleName("USER")
+                        .orElseThrow(() -> new NotFoundException("Role not found"));
+                userRoles.setRoles(role);
+                userRoleRepository.save(userRoles);
+                // Thêm userRoles vào danh sách của savedUser
+                savedUser.getUserRoles().add(userRoles);
+
+            }
+            token = generateJwtToken(savedUser);
+        }
+        return AuthenticationResponse.builder()
+                .token(token)
+                .authenticated(true)
+                .build();
 
 
+    }
 }
