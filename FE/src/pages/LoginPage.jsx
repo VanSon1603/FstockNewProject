@@ -1,7 +1,7 @@
-import { useContext, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { loginAuth } from "../service/AuthService";
 import AuthContext from "../contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import Banner from "../components/user/Banner";
 import { ToastContext } from "../contexts/ToastContext";
@@ -13,6 +13,8 @@ const LoginPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const navigator = useNavigate();
+
+  const [params] = useSearchParams();
   const {
     register,
     handleSubmit,
@@ -79,6 +81,12 @@ const LoginPage = () => {
       setLoading(false);
     }
   };
+
+   useEffect(() => {
+    if (params?.has("error")) {
+      toast.error("Đăng nhập không thành công.");
+    }
+  }, [params]);
 
   return (
     <>

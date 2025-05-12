@@ -11,6 +11,7 @@ import com.example.Fstock.entity.Order;
 import com.example.Fstock.entity.Roles;
 import com.example.Fstock.entity.User;
 import com.example.Fstock.entity.User_Roles;
+import com.example.Fstock.enums.AccountType;
 import com.example.Fstock.enums.Gender;
 import com.example.Fstock.exception.BadRequestException;
 import com.example.Fstock.exception.ConflictException;
@@ -20,8 +21,10 @@ import com.example.Fstock.mapper.UserMapper;
 import com.example.Fstock.responsitory.RolesRepository;
 import com.example.Fstock.responsitory.UserRepository;
 import com.example.Fstock.responsitory.User_RoleRepository;
+import com.example.Fstock.service.Service.AuthenticationService;
 import com.example.Fstock.service.Service.UserService;
 import com.example.Fstock.ultis.CloudinaryUltis;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -43,7 +46,7 @@ public class UserServiceimpl implements UserService {
     @Autowired
     private  UserRepository userRepository;
     @Autowired
-    private User_RoleRepository userRoleRepository;
+    private AuthenticationService authenticationService;
     @Autowired
     private UserMapper userMapper;
     @Autowired
@@ -57,6 +60,7 @@ public class UserServiceimpl implements UserService {
 
 
     @Override
+    @Transactional
     public void createUser(CreationUser creationUser) {
         User newUser = new User();
         if(userRepository.existsByUserName(creationUser.getUserName())) {
@@ -73,6 +77,8 @@ public class UserServiceimpl implements UserService {
         newUser.setPhone(creationUser.getPhone());
         newUser.setUserName(creationUser.getUserName());
         newUser.setImgUrlDisplay(avatarDefault);
+        newUser.setActive(false);
+        newUser.setAccountType(AccountType.LOCAL);
         if (creationUser.getGender() != null) {
             newUser.setGender(creationUser.getGender());
         }else {
@@ -83,24 +89,29 @@ public class UserServiceimpl implements UserService {
         if(savedUser == null) {
             throw new InternalServerErrorException("create user failed");
         }
-
+        // handle Role for new user
+        List<User_Roles> userRolesList = new ArrayList<>();
         if (creationUser.getRoles() == null || creationUser.getRoles().isEmpty()) {
+
             User_Roles userRoles = new User_Roles();
-            userRoles.setUser(newUser);
-            Roles role = rolesRepository.findByRoleName("USER").orElseThrow(() -> new NotFoundException("Role not found"));
+            userRoles.setUser(savedUser);
+            Roles role = rolesRepository.findByRoleName("USER")
+                    .orElseThrow(() -> new NotFoundException("Role not found"));
             userRoles.setRoles(role);
-            userRoleRepository.save(userRoles);
-        }
-        if(creationUser.getRoles() != null && !creationUser.getRoles().isEmpty()) {
-            for (Roles role : creationUser.getRoles()) {
+            userRolesList.add(userRoles);
+        } else {
+            creationUser.getRoles().forEach((role) -> {
                 User_Roles userRoles = new User_Roles();
-                userRoles.setUser(newUser);
+                userRoles.setUser(savedUser);
                 userRoles.setRoles(role);
-                userRoleRepository.save(userRoles);
-            }
+                userRolesList.add(userRoles);
+            });
         }
+        savedUser.setUserRoles(userRolesList);
+        userRepository.save(savedUser);
 
-
+        // Send email for verification
+        authenticationService.sendEmailForVerification(savedUser);
 
     }
 

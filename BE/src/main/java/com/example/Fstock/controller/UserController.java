@@ -34,7 +34,7 @@ public class UserController {
     public ResponseEntity<ApiResponse> createUser(@RequestBody @Valid CreationUser user) {
         userService.createUser(user);
         return ResponseEntity.ok(ApiResponse.builder()
-                .message("User Created")
+                .message("User Created, please check your email to verify")
                 .build());
 
     }

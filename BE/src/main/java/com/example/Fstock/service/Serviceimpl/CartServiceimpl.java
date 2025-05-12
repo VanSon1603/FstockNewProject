@@ -30,7 +30,7 @@ import java.util.Set;
 @Slf4j
 public class CartServiceimpl implements CartService {
     @Autowired
-    private  CartRepository cartRepository;
+    private CartRepository cartRepository;
     @Autowired
     private UserRepository userRepository;
     @Autowired

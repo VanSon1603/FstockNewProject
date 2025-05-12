@@ -3,19 +3,13 @@ package com.example.Fstock.service.Serviceimpl;
 import com.example.Fstock.dto.request.*;
 import com.example.Fstock.dto.response.AuthenticationResponse;
 import com.example.Fstock.dto.response.IntrospectResponse;
-import com.example.Fstock.entity.InvalidatedToken;
-import com.example.Fstock.entity.Roles;
-import com.example.Fstock.entity.User;
-import com.example.Fstock.entity.User_Roles;
+import com.example.Fstock.entity.*;
 import com.example.Fstock.enums.AccountType;
 import com.example.Fstock.enums.Gender;
 import com.example.Fstock.exception.BadRequestException;
 import com.example.Fstock.exception.NotFoundException;
 import com.example.Fstock.exception.UnAuthorizedException;
-import com.example.Fstock.responsitory.InvalidatedTokenRepository;
-import com.example.Fstock.responsitory.RolesRepository;
-import com.example.Fstock.responsitory.UserRepository;
-import com.example.Fstock.responsitory.User_RoleRepository;
+import com.example.Fstock.responsitory.*;
 import com.example.Fstock.service.Service.AuthenticationService;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
@@ -37,6 +31,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -58,7 +54,14 @@ public class AuthenticationServiceimpl implements AuthenticationService {
     private UserRepository userRepository;
     @Autowired
     private InvalidatedTokenRepository invalidatedTokenRepository;
-
+    @Autowired
+    private VerificationTokenRepository verificationTokenRepository;
+    @Autowired
+    private RolesRepository rolesRepository;
+    @Autowired
+    private User_RoleRepository userRoleRepository;
+    @Autowired
+    private JavaMailSender javaMailSender;
     @Value("${jwt.secretKey}")
     protected String secretKey;
 
@@ -67,10 +70,6 @@ public class AuthenticationServiceimpl implements AuthenticationService {
 
     @Value("${jwt.refresh-duration}")
     protected String refreshTokenDuration; // thời gian refresh token
-    @Autowired
-    private RolesRepository rolesRepository;
-    @Autowired
-    private User_RoleRepository userRoleRepository;
 
 
     @Override
@@ -157,6 +156,7 @@ public class AuthenticationServiceimpl implements AuthenticationService {
             throw new RuntimeException(e);
         }
     }
+
 
     @Override
     public AuthenticationResponse refreshToken(RefreshTokenRequest refreshTokenRequest) throws ParseException, JOSEException {
@@ -308,7 +308,42 @@ public class AuthenticationServiceimpl implements AuthenticationService {
                 .token(token)
                 .authenticated(true)
                 .build();
+    }
 
+    @Override
+    @Transactional
+    public void sendEmailForVerification(User user){
+        String token =  generateJwtToken(user);
+
+        VerificationToken verificationToken = new VerificationToken();
+        verificationToken.setToken(token);
+        verificationToken.setUser(user);
+        verificationTokenRepository.save(verificationToken);
+
+        // Gửi email xác thực đến người dùng
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(user.getEmail());
+        message.setSubject("Xác thực tài khoản FTSOCK");
+        message.setText("Vui lòng nhấp vào liên kết sau để xác thực tài khoản của bạn: " +
+                "http://localhost:8080/api/auth/verify-email?token=" + token);
+        javaMailSender.send(message);
+    }
+    @Override
+    @Transactional
+    public boolean verifyEmail(String token) throws ParseException, JOSEException {
+        try{
+        VerificationToken verificationToken = verificationTokenRepository.findByToken(token)
+                .orElseThrow(() -> new NotFoundException("Verification token not found"));
+        SignedJWT signedJWT = verifyToken(token, false);
+        User user =userRepository.findByEmail(signedJWT.getJWTClaimsSet().getSubject())
+                .orElseThrow(() -> new NotFoundException("User not found"));
+        user.setActive(true);
+        userRepository.save(user);
+        verificationTokenRepository.deleteByUserUserId(Long.valueOf(user.getUserId()));
+        return true;
+        }catch(Exception e) {
+            return false;
+        }
 
     }
 }

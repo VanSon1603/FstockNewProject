@@ -4,11 +4,14 @@ import com.example.Fstock.dto.request.*;
 import com.example.Fstock.dto.response.ApiResponse;
 import com.example.Fstock.dto.response.AuthenticationResponse;
 import com.example.Fstock.dto.response.IntrospectResponse;
+import com.example.Fstock.exception.NotFoundException;
 import com.example.Fstock.service.Service.AuthenticationService;
 import com.nimbusds.jose.JOSEException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.view.RedirectView;
+
 import java.text.ParseException;
 
 @RestController
@@ -78,6 +81,26 @@ public class AuthenticationController {
                 );
 
     }
+
+    @GetMapping("/verify-email")
+    public RedirectView verifyEmail (@RequestParam("token") String token) throws ParseException, JOSEException {
+        RedirectView redirectView = new RedirectView();
+        boolean result = false;
+        try {
+            result = authenticationService.verifyEmail(token);
+        } catch (ParseException | JOSEException | NotFoundException e) {
+            redirectView.setUrl("http://localhost:5173/login?error=token_invalid");
+            return redirectView;
+        }
+        if (result) {
+            redirectView.setUrl("http://localhost:5173?verify-email=success");
+        } else {
+            redirectView.setUrl("http://localhost:5173/login?error=token_invalid");
+        }
+        return redirectView;
+    }
+
+
 
 
 }

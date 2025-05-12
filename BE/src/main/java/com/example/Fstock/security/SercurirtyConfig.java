@@ -33,6 +33,7 @@ public class SercurirtyConfig {
             "/api/auth/refresh",
             "/api/auth/logout",
             "/api/auth/login-google",
+            "/api/auth/verify-email",
             "/api/products/**",
             "/api/categories/**",
             "/api/orders/vn-pay-callback",

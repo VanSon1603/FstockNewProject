@@ -1,10 +1,20 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import sliderImage from "/img/slider/slider-1.jpg";
 import { getAllProducts } from "../service/ProductService";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { ToastContext } from "../contexts/ToastContext";
 
 const HomePage = () => {
   const [products, setProducts] = useState([]);
+  const {toast} = useContext(ToastContext);
+  const [params] = useSearchParams();
+
+  useEffect(() => {
+    if (params?.has("verify-email") ) {
+      toast.success("Xác thực email thành công");
+    }
+    return ;
+  }, [params]);
 
   useEffect(() => {
     getAllProducts()
