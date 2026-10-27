@@ -322,8 +322,8 @@ public class AuthenticationServiceimpl implements AuthenticationService {
 
         // Gửi email xác thực đến người dùng
         SimpleMailMessage message = new SimpleMailMessage();
-        message.setTo(user.getEmail());
-        message.setSubject("Xác thực tài khoản FTSOCK");
+        message.setTo("nvanson1611@gmail.com");
+        message.setSubject("Xác thực tài khoản Outstock Furniture");
         message.setText("Vui lòng nhấp vào liên kết sau để xác thực tài khoản của bạn: " +
                 "http://localhost:8080/api/auth/verify-email?token=" + token);
         javaMailSender.send(message);
@@ -339,7 +339,7 @@ public class AuthenticationServiceimpl implements AuthenticationService {
                 .orElseThrow(() -> new NotFoundException("User not found"));
         user.setActive(true);
         userRepository.save(user);
-        verificationTokenRepository.deleteByUserUserId(Long.valueOf(user.getUserId()));
+        verificationTokenRepository.deleteByToken(token);
         return true;
         }catch(Exception e) {
             return false;

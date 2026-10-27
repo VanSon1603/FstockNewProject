@@ -18,6 +18,6 @@ public interface OrderService {
     OrderDto getOrderById(Integer orderId);
     Page<OrderDto> getListNewOrders(int pageNumber, int pageSize, int keySearch);
     Page<OrderDto> getAllOrders(int pageNumber, int pageSize);
-    Set<OrderDto> getOrdersByEmail(String email);
+    List<OrderDto> getOrdersByEmail(String email);
     Page<OrderDto> getOrderByCondition(int pageNumber, int pageSize, String status, Integer orderId, LocalDate startDate, LocalDate endDate, boolean sortByDateInc);
     }

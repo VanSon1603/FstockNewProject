@@ -107,10 +107,10 @@ public class OrderController {
     }
     }
 
-    @GetMapping
+    @GetMapping()
     public ResponseEntity<ApiResponse> getOrdersByEmail(@RequestParam("email") String email){
 
-        return ResponseEntity.ok(ApiResponse.<Set<OrderDto>>builder()
+        return ResponseEntity.ok(ApiResponse.<List<OrderDto>>builder()
                 .message("Create order successfully")
                 .data(orderService.getOrdersByEmail(email))
                 .build());

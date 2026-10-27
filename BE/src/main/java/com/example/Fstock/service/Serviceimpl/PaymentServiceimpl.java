@@ -2,6 +2,7 @@
     import com.example.Fstock.config.VnpayConfig;
     import com.example.Fstock.service.Service.PaymentService;
     import jakarta.servlet.http.HttpServletRequest;
+    import lombok.RequiredArgsConstructor;
     import org.springframework.beans.factory.annotation.Autowired;
     import org.springframework.stereotype.Service;
     import javax.crypto.Mac;
@@ -13,10 +14,10 @@
     import java.util.stream.Collectors;
 
     @Service
+    @RequiredArgsConstructor
     public class PaymentServiceimpl implements PaymentService {
-        @Autowired
-        private VnpayConfig vnpayConfig;
 
+        private final VnpayConfig vnpayConfig;
 
         @Override
         public String createOrderVNPAY(HttpServletRequest request) throws  UnsupportedEncodingException {
@@ -42,7 +43,7 @@
         public static String getIpAddress(HttpServletRequest request) {
             String ipAdress;
             try {
-                ipAdress = request.getHeader("X-FORWARDED-FOR");
+                    ipAdress = request.getHeader("X-FORWARDED-FOR");
                 if (ipAdress == null) {
                     ipAdress = request.getRemoteAddr();
                 }

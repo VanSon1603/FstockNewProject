@@ -4,6 +4,7 @@ import com.example.Fstock.dto.request.CreateProductRequest;
 import com.example.Fstock.dto.response.ApiResponse;
 import com.example.Fstock.dto.response.ColorInfo;
 import com.example.Fstock.dto.response.ProductDto;
+import com.example.Fstock.dto.response.ProductVariantDto;
 import com.example.Fstock.service.Service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -22,7 +23,6 @@ public class ProductController {
     @Autowired
     private ProductService productService;
 
-
     @GetMapping("/page")
     public ResponseEntity<Page<ProductDto>> getAllProducts(@RequestParam(value = "pageNumber", defaultValue = "1") int pageNumber ,
                                                            @RequestParam(value = "pageSize" , defaultValue = "10") int pageSize ,
@@ -30,6 +30,16 @@ public class ProductController {
         Page<ProductDto> productDtos = productService.getAllProducts(pageNumber , pageSize, search);
         return new ResponseEntity<>(productDtos , HttpStatus.OK);
     }
+
+    @GetMapping("/top-selling")
+    public ResponseEntity<ApiResponse> getHotProducts(@RequestParam(value = "size", defaultValue = "8") Integer size){
+        Page<ProductDto> productDtos = productService.getTopSellingProducts(size);
+        return  ResponseEntity.ok(ApiResponse.<Page<ProductDto>>builder()
+                .message("Top selling product list")
+                .data(productDtos)
+                .build());
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse> getProductById(@PathVariable("id") int productId){
         ProductDto productDto = productService.getProductById(productId);
@@ -63,10 +73,13 @@ public class ProductController {
             @RequestParam(value = "color", required = false) String colorName,
             @RequestParam(value = "size", required = false) String sizeName,
             @RequestParam(value = "category", required = false) Integer categoryId,
+            @RequestParam(value = "productName", required = false) String productName,
+            @RequestParam(value = "sortBy", required = false) String sortBy,
+
             @RequestParam("pageNumber") Integer pageNumber
     )
     {
-        Page<ProductDto> productDtos = productService.getProductByFilter(priceMin, priceMax, sizeName, colorName, categoryId, pageNumber);
+        Page<ProductDto> productDtos = productService.getProductByFilter(priceMin, priceMax, sizeName, colorName, categoryId, productName, sortBy, pageNumber);
         return  ResponseEntity.ok(ApiResponse.<Page<ProductDto>>builder()
                 .message("Product list filtred")
                 .data(productDtos)
@@ -112,6 +125,16 @@ public class ProductController {
         productService.deleteProduct(productId);
         return ResponseEntity.ok(ApiResponse.builder()
                 .message("Product deleted successfully")
+                .build());
+    }
+
+    @GetMapping("/product-variants")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse> getListProductVariant(@RequestParam("productId") int productId,
+                                                             @RequestParam(value = "pageNumber", defaultValue = "1") int pageNumber){
+        return ResponseEntity.ok(ApiResponse.<Page<ProductVariantDto>>builder()
+                .message("get list product variant successfully")
+                .data(productService.getProductVariantsByProductId(productId, pageNumber))
                 .build());
     }
 

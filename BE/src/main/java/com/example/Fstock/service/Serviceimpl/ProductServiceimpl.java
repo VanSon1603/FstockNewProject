@@ -2,28 +2,23 @@ package com.example.Fstock.service.Serviceimpl;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import com.example.Fstock.dto.request.CreateProductRequest;
-import com.example.Fstock.dto.response.ColorInfo;
-import com.example.Fstock.dto.response.ProductDto;
-import com.example.Fstock.dto.response.ReviewResponse;
+import com.example.Fstock.dto.response.*;
 import com.example.Fstock.entity.*;
 import com.example.Fstock.exception.NotFoundException;
 import com.example.Fstock.mapper.ProductMapper;
 import com.example.Fstock.mapper.ProductVariantMapper;
 import com.example.Fstock.mapper.ReviewMapper;
-import com.example.Fstock.responsitory.CategoryRepository;
-import com.example.Fstock.responsitory.ProductRepository;
-import com.example.Fstock.responsitory.ProductVariantRepository;
+import com.example.Fstock.responsitory.*;
+import com.example.Fstock.responsitory.specification.ProductSpecification;
 import com.example.Fstock.service.Service.ProductService;
 import com.example.Fstock.ultis.CloudinaryUltis;
 import jakarta.transaction.Transactional;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.*;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -35,6 +30,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class ProductServiceimpl implements ProductService {
     @Autowired
@@ -53,6 +49,10 @@ public class ProductServiceimpl implements ProductService {
     private CloudinaryUltis cloudinaryUltis;
     @Autowired
     private  Cloudinary cloudinary;
+    @Autowired
+    private OrderRepository orderRepository;
+    @Autowired
+    private OrderItemRepository orderItemRepository;
 
     @Override
     public ProductDto getProductById(int id) {
@@ -65,15 +65,21 @@ public class ProductServiceimpl implements ProductService {
         product.getReviews().forEach(review -> {
             reviewResponses.add(reviewMapper.toReviewResponse(review));
         } );
-        double averageRating = product.getReviews().stream()
-                .mapToDouble(Review::getRating)
-                .average()
-                .orElse(0.0);
-        DecimalFormat decimalFormat = new DecimalFormat("#.#");
-        productDto.setAverageRatings(Double.valueOf(decimalFormat.format(averageRating)));
         productDto.setReviewResponses(reviewResponses);
-
         return productDto;
+    }
+
+    @Override
+    public Page<ProductDto> getTopSellingProducts(Integer size) {
+        List<Product> products = productRepository.findTopSellingProducts();
+        List<ProductDto> productDtos = products.stream()
+                .map(product -> productMapper.toDto(product))
+                .collect(Collectors.toList());
+        Pageable pageDetail = PageRequest.of(0, size);
+        int start = (int)pageDetail.getOffset();
+        int end = (int)(pageDetail.getOffset()+pageDetail.getPageSize()> productDtos.size() ? productDtos.size() : pageDetail.getOffset()+pageDetail.getPageSize());
+        List<ProductDto> productDtoFinal = productDtos.subList(start,end);
+        return new PageImpl<>(productDtoFinal, pageDetail,productDtos.size());
 
     }
 
@@ -104,55 +110,33 @@ public class ProductServiceimpl implements ProductService {
                                                String sizeName,
                                                String colorName ,
                                                Integer categoryId,
+                                               String productName,
+                                               String sortBy,
                                                int pageNumber) {
-
-        List<ProductDto> productDtos = productMapper.toListDto(productRepository.findAll());
-        if(categoryId != null){
-            List<Integer> productIdsByCategory = productRepository.findByCategoryCategoryId(categoryId)
-                    .stream()
-                    .map(Product::getProductId)
-                    .collect(Collectors.toList());
-
-
-            //những phần tuwrnaof không nằm trong  productIdsByCategory sẽ bị loại
-            productDtos.removeIf(productDto -> !productIdsByCategory.contains(productDto.getProductId()));
+        // Build dynamic sort
+        Sort sort = Sort.unsorted();
+        if ("RatingDesc".equalsIgnoreCase(sortBy)) {
+            sort = Sort.by(Sort.Direction.DESC, "averageRatings");
+        } else if ("RatingAsc".equalsIgnoreCase(sortBy)) {
+            sort = Sort.by(Sort.Direction.ASC, "averageRatings");
+        } else if ("PriceDesc".equalsIgnoreCase(sortBy)) {
+            sort = Sort.by(Sort.Direction.DESC, "priceDefault");
+        } else if ("PriceAsc".equalsIgnoreCase(sortBy)) {
+            sort = Sort.by(Sort.Direction.ASC, "priceDefault");
         }
-        if(priceMin != null ){
-            if(priceMax != null){
-                productDtos.removeIf(productDto ->
-                        productDto.getPriceDefault() == null ||
-                                productDto.getPriceDefault().compareTo(BigDecimal.valueOf(priceMin)) < 0 ||
-                                productDto.getPriceDefault().compareTo(BigDecimal.valueOf(priceMax)) > 0);
-            }else{
-                productDtos.removeIf(productDto ->
-                        productDto.getPriceDefault() == null ||
-                                productDto.getPriceDefault().compareTo(BigDecimal.valueOf(priceMin)) < 0) ;
-            }
-        }
-        if (colorName != null){
-            List<Integer> productIdsByColor = productRepository.findByProductVariantsColorName(colorName)
-                    .stream()
-                    .map(Product::getProductId)
-                    .collect(Collectors.toList());
 
-            productDtos.removeIf(productDto -> !productIdsByColor.contains(productDto.getProductId()));
-        }
-        if (sizeName != null){
-            List<Integer> productIdsBySize = productRepository.findByProductVariantsSizeName(sizeName)
-                    .stream()
-                    .map(Product::getProductId)
-                    .collect(Collectors.toList());
+        Pageable pageable = PageRequest.of(pageNumber - 1, 10, sort);
 
-            productDtos.removeIf(productDto -> !productIdsBySize.contains(productDto.getProductId()));
-        }
-        if(productDtos.isEmpty()) {
-            throw new NotFoundException("List Product Not Found");
-        }
-        Pageable pageDetail = PageRequest.of(pageNumber-1, 9);
-        int start = (int)pageDetail.getOffset();
-        int end = (int)(pageDetail.getOffset()+pageDetail.getPageSize()> productDtos.size() ? productDtos.size() : pageDetail.getOffset()+pageDetail.getPageSize());
-        List<ProductDto> productDtosFinal = productDtos.subList(start,end);
-        return new PageImpl<>(productDtosFinal, pageDetail,productDtos.size());
+        Specification<Product> specification = Specification.where(ProductSpecification.hasCategory(categoryId))
+                .and(ProductSpecification.hasColor(colorName))
+                .and(ProductSpecification.hasSize(sizeName))
+                .and(ProductSpecification.hasPriceRange(priceMin, priceMax))
+                .and(ProductSpecification.hasProductName(productName));
+
+        Page<Product> products = productRepository.findAll(specification, pageable);
+        Page<ProductDto> productDtos = products.map(product -> productMapper.toDto(product));
+        log.info("Filtered products: {}", productDtos.getContent());
+        return  productDtos;
     }
 
     @Override
@@ -210,6 +194,7 @@ public class ProductServiceimpl implements ProductService {
         product.setProductName(createProductRequest.getProductName());
         product.setDescription(createProductRequest.getDescription());
         product.setPriceDefault(createProductRequest.getPriceDefault());
+        product.setAverageRatings(0.0);
         if (productRepository.findByProductSKU(createProductRequest.getProductSKU()) != null) {
             throw new BadRequestException("SKU already exists");
         }
@@ -336,4 +321,29 @@ public class ProductServiceimpl implements ProductService {
         }
         productRepository.save(product);
     }
+
+    @Override
+    public void updateAverageRating(Integer productId) {
+        Product product = productRepository.findByProductId(productId);
+        if(product == null) {
+            throw new NotFoundException("Product not found");
+        }
+        double averageRating = product.getReviews().stream()
+                .mapToDouble(Review::getRating)
+                .average()
+                .orElse(0.0);
+        DecimalFormat decimalFormat = new DecimalFormat("#.#");
+        averageRating = Double.valueOf(decimalFormat.format(averageRating));
+        product.setAverageRatings(averageRating);
+        productRepository.save(product);
+    }
+
+    @Override
+    public Page<ProductVariantDto> getProductVariantsByProductId(int productId, int pageNumber) {
+        Pageable pageable = PageRequest.of(pageNumber - 1, 10);
+        Page<ProductVariant> productVariants = productVariantRepository.findByProductProductId(productId, pageable);
+        Page<ProductVariantDto> productVariantDtos = productVariants.map(variant -> productVariantMapper.toDto(variant));
+        return productVariantDtos;
+    }
+
 }

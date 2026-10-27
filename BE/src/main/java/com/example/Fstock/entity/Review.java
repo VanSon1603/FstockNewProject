@@ -21,7 +21,6 @@ public class Review {
     private String content;
     private int rating;
     private Date createdAt;
-
     @ManyToOne
     @JoinColumn(name = "product_id")
     private Product product;

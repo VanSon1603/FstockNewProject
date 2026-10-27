@@ -9,7 +9,7 @@ public class OrderSpecification {
 
     public static Specification<Order> hasStatus(String status) {
         return (root, query, cb) -> {
-            if (status == null || status.equals("ALL")) return null;
+            if (status == null || status.equals("ALL") || status.trim().isEmpty()) return null;
             return cb.equal(root.get("orderStatus"), status);
         };
     }

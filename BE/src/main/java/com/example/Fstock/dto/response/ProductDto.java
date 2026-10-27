@@ -23,6 +23,7 @@ public class ProductDto  {
     private CategoryDto category;
     private Double averageRatings;
     private Integer quantityInStock;
+    private Integer quantitySold;
     private List<ProductVariantDto> productVariants;
     private List<ProductImagesDto> productImages;
     private List<ReviewResponse> reviewResponses;

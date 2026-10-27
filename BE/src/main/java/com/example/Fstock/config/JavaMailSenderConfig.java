@@ -11,7 +11,6 @@ import java.util.Properties;
 @Configuration
 public class JavaMailSenderConfig {
     Dotenv dotenv = Dotenv.load();
-
     @Bean
     public JavaMailSender javaMailSender() {
         JavaMailSenderImpl mailSender = new JavaMailSenderImpl();
@@ -20,8 +19,13 @@ public class JavaMailSenderConfig {
         mailSender.setUsername(dotenv.get("MAIL_USERNAME"));
         mailSender.setPassword(dotenv.get("MAIL_PASSWORD"));
         Properties props = mailSender.getJavaMailProperties();
-        props.put("mail.smtp.auth", "true");
         props.put("mail.smtp.starttls.enable", "true");
+        props.put("mail.smtp.starttls.required", "true");
+
+        // Fix SSLHandshakeException
+        props.put("mail.smtp.ssl.trust", "smtp.gmail.com");
+
+        props.put("mail.smtp.auth", "true");
         return mailSender;
     }
 }

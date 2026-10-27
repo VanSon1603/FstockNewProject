@@ -10,6 +10,7 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class ChangePasswordRequest {
+
     private String email;
     @NotBlank(message = "Password must not be blank")
     @Pattern(regexp = "^(?=.*[A-Z])(?=.*[@#$%^&+=!.()+ =]).{8,}$",

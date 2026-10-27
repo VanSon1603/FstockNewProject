@@ -1,6 +1,5 @@
 package com.example.Fstock.service.Serviceimpl;
 
-import com.example.Fstock.config.VnpayConfig;
 import com.example.Fstock.dto.request.CreateOrderRequest;
 import com.example.Fstock.dto.response.OrderDto;
 import com.example.Fstock.entity.Order;
@@ -8,7 +7,6 @@ import com.example.Fstock.entity.Order_Item;
 import com.example.Fstock.entity.Product;
 import com.example.Fstock.entity.User;
 import com.example.Fstock.enums.OrderStatus;
-import com.example.Fstock.enums.PaymentMethod;
 import com.example.Fstock.exception.NotFoundException;
 import com.example.Fstock.mapper.OrderMapper;
 import com.example.Fstock.responsitory.OrderRepository;
@@ -16,13 +14,11 @@ import com.example.Fstock.responsitory.ProductRepository;
 import com.example.Fstock.responsitory.UserRepository;
 import com.example.Fstock.responsitory.specification.OrderSpecification;
 import com.example.Fstock.service.Service.OrderService;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-import org.w3c.dom.stylesheets.LinkStyle;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -130,27 +126,28 @@ public class OrderServiceImplement implements OrderService {
             Page<OrderDto> orderDtos = orders.map(order -> orderMapper.toDto(order));
             return orderDtos;
         }
-        Pageable pageable = PageRequest.of(pageNumber-1, pageSize);
+        Pageable pageable = PageRequest.of(pageNumber-1, pageSize, Sort.by("orderDate").descending());
         Page<Order> orders = orderRepository.findByOrderStatus(OrderStatus.PENDING, pageable);
         Page<OrderDto> orderDtos = orders.map(order -> orderMapper.toDto(order));
         return orderDtos;
     }
     @Override
     public Page<OrderDto> getAllOrders(int pageNumber, int pageSize) {
-        Pageable pageable = PageRequest.of(pageNumber-1, pageSize);
+        Pageable pageable = PageRequest.of(pageNumber-1, pageSize, Sort.by("orderDate").descending());
         Page<Order> orders = orderRepository.findAll(pageable);
         Page<OrderDto> orderDtos = orders.map(order -> orderMapper.toDto(order));
         return orderDtos;
     }
 
     @Override
-    public Set<OrderDto> getOrdersByEmail(String email) {
-        Set<OrderDto> orderDtos = new HashSet<>();
-        Set<Order> orders = orderRepository.findByEmail(email);
+    public List<OrderDto> getOrdersByEmail(String email) {
+        List<OrderDto> orderDtos = new ArrayList<>();
+        List<Order> orders = orderRepository.findByEmail(email);
         for (Order order : orders) {
             OrderDto orderDto = orderMapper.toDto(order);
             orderDtos.add(orderDto);
         }
+        log.info("Order dtos: {}", orderDtos);
         return orderDtos;
     }
 

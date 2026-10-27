@@ -1,4 +1,5 @@
 package com.example.Fstock.dto.response;
+import com.example.Fstock.enums.AccountType;
 import lombok.*;
 
 import java.util.List;
@@ -17,8 +18,7 @@ public class UserResponse {
     private String phone;
     private String imgUrlDisplay;
     private boolean active;
-
-
+    private AccountType accountType;
     private List<RolesReponse> roles;
 
 }
