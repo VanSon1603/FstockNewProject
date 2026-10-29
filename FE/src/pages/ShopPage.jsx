@@ -5,6 +5,7 @@ import { listCategories } from "../service/CategoryService";
 import {
   getColorNames,
   getProductByFilter,
+  getProductTopSelling,
   getSizeNames,
 } from "../service/ProductService";
 import ErrorCom from "../components/user/Error";
@@ -13,6 +14,7 @@ import Pagination from "../components/user/Pagination";
 import BtnAddToCart from "../components/user/button/btnAddToCart";
 const ShopPage = () => {
   const [products, setProducts] = useState([]);
+  const [productFeatured, setProductFeatured] = useState([]);
   const [categories, setCategories] = useState([]);
   const [searchParam, setSearchParam] = useSearchParams();
   const [selectedPrice, setSelectedPrice] = useState({ min: null, max: null });
@@ -24,7 +26,6 @@ const ShopPage = () => {
     statusCode: null,
     message: null,
   });
-  console.log(colors);
 
   const [filter, setFilter] = useState({
     category: null,
@@ -32,9 +33,10 @@ const ShopPage = () => {
     priceMax: null,
     color: null,
     size: null,
+    productName: null,
+    sortBy: null,
     pageNumber: 1,
   });
-  console.log(filter);
   const [appliedFilter, setAppliedFilter] = useState({
     category: null,
     priceMin: null,
@@ -43,6 +45,16 @@ const ShopPage = () => {
     size: null,
   });
 
+  const search = searchParam.get("search") || "";
+  useEffect(() => {
+    if (search) {
+      setFilter((prev) => ({
+        ...prev,
+        productName: search,
+      }));
+    }
+  }, [search]);
+  
   // lấy ra các cặp key value và biến nó thành 1 object mới chỉ chứa các cặp key value này
   const filtered = Object.entries(appliedFilter)
     .filter(([key, value]) => value !== null)
@@ -104,7 +116,6 @@ const ShopPage = () => {
     };
     fetchSizes();
   }, []);
-  console.log(products);
 
   useEffect(() => {
     getProductByFilter(filter)
@@ -118,12 +129,21 @@ const ShopPage = () => {
             category: filter.category,
             color: filter.color,
             size: filter.size,
+            productName: filter.productName,
+            sortBy: filter.sortBy,
             pageNumber: filter.pageNumber,
             //lọc bỏ các phần tử có giá trị null
           }).filter(([, value]) => value !== null && value !== undefined)
         );
+        console.log("products", result.data.data.content);
         setSearchParam(filteredParams);
         setError(null);
+        if (filter.productName){
+          setFilter((prev) => ({
+            ...prev,
+            productName: null,
+          }));
+        }
       })
       .catch((err) => {
         setError({
@@ -132,6 +152,13 @@ const ShopPage = () => {
         });
       });
   }, [filter]);
+  useEffect(() => {
+    const fetchProductFeatured = async () => {
+      const res = await getProductTopSelling(3);
+      setProductFeatured(res.data.data.content);
+    };
+    fetchProductFeatured();
+  }, [])
 
   const handleFilterChange = (key, value1, value2) => {
     setFilter((prev) => ({
@@ -212,6 +239,11 @@ const ShopPage = () => {
         }));
       }
     }
+  };
+
+  const handleAddToCartList = (e, productId) => {
+    e.preventDefault();
+    navigator(`/product-detail/${productId}`);
   };
 
   return (
@@ -394,12 +426,14 @@ const ShopPage = () => {
                 <div className="sidebar__widget-content">
                   <div className="features__product">
                     <ul>
-                      <li className="mb-20">
+                    {productFeatured.map((item) => (
+                      <li className="mb-20" key={item.productId}>
                         <div className="featires__product-wrapper d-flex">
                           <div className="features__product-thumb mr-15">
                             <a href="product-details.html">
                               <img
-                                src="assets/img/shop/product/sm/pro-sm-1.jpg"
+                                src={item.imageUrlDisplay}
+                                style={{width: "70px", height: "80px"}}
                                 alt="pro-sm-1"
                               ></img>
                             </a>
@@ -407,62 +441,19 @@ const ShopPage = () => {
                           <div className="features__product-content">
                             <h5>
                               <a href="product-details.html">
-                                Wooden container Bowl
+                               {item.productName}
                               </a>
                             </h5>
                             <div className="price">
-                              <span>$98</span>
-                              <span className="price-old">$128</span>
+                              <span>$</span>
+                              <span className="price-old">${item.priceDefault}</span>
                             </div>
                           </div>
                         </div>
                       </li>
-                      <li className="mb-20">
-                        <div className="featires__product-wrapper d-flex">
-                          <div className="features__product-thumb mr-15">
-                            <a href="product-details.html">
-                              <img
-                                src="assets/img/shop/product/sm/pro-sm-2.jpg"
-                                alt="pro-sm-2"
-                              ></img>
-                            </a>
-                          </div>
-                          <div className="features__product-content">
-                            <h5>
-                              <a href="product-details.html">
-                                Wooden container Bowl
-                              </a>
-                            </h5>
-                            <div className="price">
-                              <span>$98</span>
-                              <span className="price-old">$128</span>
-                            </div>
-                          </div>
-                        </div>
-                      </li>
-                      <li className="mb-20">
-                        <div className="featires__product-wrapper d-flex">
-                          <div className="features__product-thumb mr-15">
-                            <a href="product-details.html">
-                              <img
-                                src="assets/img/shop/product/sm/pro-sm-3.jpg"
-                                alt="pro-sm-3"
-                              ></img>
-                            </a>
-                          </div>
-                          <div className="features__product-content">
-                            <h5>
-                              <a href="product-details.html">
-                                Wooden container Bowl
-                              </a>
-                            </h5>
-                            <div className="price">
-                              <span>$98</span>
-                              <span className="price-old">$128</span>
-                            </div>
-                          </div>
-                        </div>
-                      </li>
+                    ))}
+                      
+                      
                     </ul>
                   </div>
                 </div>
@@ -479,12 +470,12 @@ const ShopPage = () => {
                 </div>
                 <div className="shop__header-right d-flex align-items-center justify-content-between justify-content-sm-end">
                   <div className="sort-wrapper mr-30 pr-25 p-relative">
-                    <select>
-                      <option value="1">Default Sorting</option>
-                      <option value="2">Type 1</option>
-                      <option value="3">Type 2</option>
-                      <option value="4">Type 3</option>
-                      <option value="5">Type 4</option>
+                    <select onChange={(e) => handleFilterChange("sortBy", e.target.value)}>
+                      <option value="" >Default Sorting</option>
+                      <option value="RatingAsc">Rating Ascending</option>
+                      <option value="RatingDesc">Rating Descrease</option>
+                      <option value="PriceDesc">Price Descrease</option>
+                      <option value="PriceAsc">Price Ascending</option>
                     </select>
                   </div>
                   <ul className="nav nav-pills" id="pills-tab" role="tablist">
@@ -550,92 +541,78 @@ const ShopPage = () => {
                   role="tabpanel"
                   aria-labelledby="pills-list-tab"
                 >
-                  <div className="product__wrapper mb-40">
-                    <div className="row">
-                      <div className="col-xl-4 col-lg-4">
-                        <div className="product__thumb">
-                          <a href="product-details.html" className="w-img">
-                            <img
-                              src="assets/img/shop/product/product-1.jpg"
-                              alt="product-img"
-                            ></img>
-                            <img
-                              className="product__thumb-2"
-                              src="assets/img/shop/product/product-10.jpg"
-                              alt="product-img"
-                            ></img>
-                          </a>
-                          <div className="product__sale ">
-                            <span className="new">new</span>
-                            <span className="percent">-16%</span>
+                {products.map((item) => {
+                  return (
+                    <div className="product__wrapper mb-40" key={item.productId}>
+                      <div className="row">
+                        <div className="col-xl-4 col-lg-4">
+                          <div className="product__thumb">
+                            <a href="product-details.html" className="w-img">
+                              <img
+                                src={item.imageUrlDisplay}
+                                alt="product-img"
+                              ></img>
+                             
+                            </a>
+                            {item?.discount && item.discount > 0 && (
+                              <div className="product__sale">
+                                <span className="new">new</span>
+                                <span className="percent">-{item.discount}%</span>
+                              </div>
+                            )}
                           </div>
                         </div>
-                      </div>
-                      <div className="col-xl-8 col-lg-8">
-                        <div className="product__content p-relative">
-                          <div className="product__content-inner list">
-                            <h4>
-                              <a href="product-details.html">
-                                Wooden container Bowl
-                              </a>
-                            </h4>
-                            <div className="product__price-2 mb-10">
-                              <span>$96.00</span>
-                              <span className="old-price">$96.00</span>
+                        <div className="col-xl-8 col-lg-8">
+                          <div className="product__content p-relative">
+                            <div className="product__content-inner list">
+                              <h4>
+                                <a href="product-details.html">
+                                  {item.productName}
+                                </a>
+                              </h4>
+                              <div className="product__price-2 mb-10">
+                                <span>$96.00</span>
+                                <span className="old-price">${item.priceDefault}</span>
+                              </div>
+                              <p>
+                                {item.description}
+                              </p>
+                              
                             </div>
-                            <p>
-                              Typi non habent claritatem insitam, est usus
-                              legentis in iis qui facit eorum claritatem.
-                              Investigationes demonstraverunt lectores legere me
-                              lius quod ii legunt saepius. Claritas est etiam
-                              processus.
-                            </p>
-                            <div className="product__list mb-30">
-                              <ul>
-                                <li>
-                                  <span>Light green crewneck sweatshirt.</span>
-                                </li>
-                                <li>
-                                  <span>Hand pockets.</span>
-                                </li>
-                                <li>
-                                  <span>Relaxed fit.</span>
-                                </li>
-                              </ul>
-                            </div>
-                          </div>
-                          <div className="add-cart-list d-sm-flex align-items-center">
-                            <BtnAddToCart></BtnAddToCart>
-                            <div className="product__action-2 transition-3 mr-20">
-                              <a
-                                href="#"
-                                data-bs-toggle="tooltip"
-                                data-placement="top"
-                                title="Add to Wishlist"
-                              >
-                                <i className="fal fa-heart"></i>
-                              </a>
-                              <a
-                                href="#"
-                                data-bs-toggle="tooltip"
-                                data-placement="top"
-                                title="Compare"
-                              >
-                                <i className="fal fa-sliders-h"></i>
-                              </a>
-                              <a
-                                href="#"
-                                data-bs-toggle="modal"
-                                data-bs-target="#productModalId"
-                              >
-                                <i className="fal fa-search"></i>
-                              </a>
+                            <div className="add-cart-list d-sm-flex align-items-center">
+                              <BtnAddToCart></BtnAddToCart>
+                              <div className="product__action-2 transition-3 mr-20">
+                                <a
+                                  data-bs-toggle="tooltip"
+                                  data-placement="top"
+                                  title="Add to Wishlist"
+                                >
+                                  <i className="fal fa-heart"></i>
+                                </a>
+                                <a
+                                  data-bs-toggle="tooltip"
+                                  data-placement="top"
+                                  title="Compare"
+                                >
+                                  <i className="fal fa-sliders-h"></i>
+                                </a>
+                                <a
+                                  data-bs-toggle="modal"
+                                  data-bs-target="#productModalId"
+                                  onClick={(e)=> {
+                                    handleAddToCartList(e, item.productId);
+                                  }}
+                                >
+                                  <i className="fal fa-search"></i>
+                                </a>
+                              </div>
                             </div>
                           </div>
                         </div>
                       </div>
                     </div>
-                  </div>
+                  );
+                })}
                 </div>
               </div>
               <div className="row mt-40">

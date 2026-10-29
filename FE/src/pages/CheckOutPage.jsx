@@ -66,6 +66,7 @@ const CheckOutPage = () => {
     }
   };
 
+  //tạo chuỗi orderId ngẫu nhiên
   const createOrderId = (len) => {
     const chars = "0123456789";
     let result = "";
@@ -103,6 +104,16 @@ const CheckOutPage = () => {
 
   const handleCreateOrder = async ( orderData) => {
     try {
+      if ( user?.scope?.includes("ROLE_ADMIN")) {
+        toast.error("Admin cannot place orders");
+        return;
+      }
+      if (orderData.orderItems.length === 0) {
+        toast.error("Your cart is empty");
+        return;
+      }
+      console.log(orderData);
+
       if (orderData.paymentMethod !== "DIRECT_PAYMENT") {
         const orderId = createOrderId(8); 
       

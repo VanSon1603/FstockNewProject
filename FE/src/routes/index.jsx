@@ -126,6 +126,7 @@ const routers = createBrowserRouter([
       </AdminRoute>
     ),
   },
+
   {
     path: "/admin/category/create-category",
     element: (

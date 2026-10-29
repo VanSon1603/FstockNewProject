@@ -5482,7 +5482,7 @@ p.checkout-coupon input[type=text] {
 .profile__edit-wrapper {
   padding: 40px 60px;
 }
-@media (max-width: 575px) {
+@media (max-width: 675px) {
   .profile__edit-wrapper {
     padding-left: 15px;
     padding-right: 15px;

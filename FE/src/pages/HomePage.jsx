@@ -1,13 +1,18 @@
 import { useContext, useEffect, useState } from "react";
 import sliderImage from "/img/slider/slider-1.jpg";
-import { getAllProducts } from "../service/ProductService";
+import { getProductTopSelling } from "../service/ProductService";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ToastContext } from "../contexts/ToastContext";
+import Loading from "../components/user/Loading";
+import ProductCard from "../components/user/ProductCard";
 
 const HomePage = () => {
   const [products, setProducts] = useState([]);
   const {toast} = useContext(ToastContext);
   const [params] = useSearchParams();
+  const navigator = useNavigate();
+  const [loading, setLoading] = useState(false);
+
 
   useEffect(() => {
     if (params?.has("verify-email") ) {
@@ -17,22 +22,27 @@ const HomePage = () => {
   }, [params]);
 
   useEffect(() => {
-    getAllProducts()
-      .then((result) => {
-        setProducts(result.data.content);
-      })
-      .catch((err) => {
-        console.error(err);
-      });
+    setLoading(true);
+    try {
+      const fetchData = async () => {
+        const response = await getProductTopSelling(8);
+        if (response.status === 200) {
+          setLoading(false);
+          setProducts(response.data.data.content);
+
+        }
+      };
+      fetchData();
+    }
+    catch (error) {
+      console.log(error);
+    }
   }, []);
-
-  const navigator = useNavigate();
-
-  const handleProductDetail = (id, event) => {
-    event.preventDefault();
-    navigator(`/product-detail/${id}`);
-  };
-
+  if (loading){
+    return (
+      <Loading></Loading>
+    );
+  }
   return (
     <>
       <section className="slider__area slider__area-3 p-relative">
@@ -94,67 +104,7 @@ const HomePage = () => {
                     key={item.productId}
                   >
                     <div className="product__item">
-                      <div className="product__wrapper mb-60">
-                        <div className="product__thumb">
-                          <a
-                            href=""
-                            className="w-img"
-                            onClick={() =>
-                              handleProductDetail(item.productId, event)
-                            }
-                          >
-                            <img
-                              src={item.imageUrlDisplay}
-                              alt="Product Image"
-                            />
-                          </a>
-                          <div className="product__action transition-3">
-                            <a
-                              href="#"
-                              data-bs-toggle="tooltip"
-                              data-placement="top"
-                              title="Add to Wishlist"
-                            >
-                              <i className="fal fa-heart"></i>
-                            </a>
-                            <a
-                              href="#"
-                              data-bs-toggle="tooltip"
-                              data-placement="top"
-                              title="Compare"
-                            >
-                              <i className="fal fa-sliders-h"></i>
-                            </a>
-                            <a
-                              href=""
-                              data-bs-toggle="modal"
-                              data-bs-target="#productModalId"
-                              title="Detail"
-                              onClick={() =>
-                                handleProductDetail(item.productId, event)
-                              }
-                            >
-                              <i className="fal fa-search"></i>
-                            </a>
-                          </div>
-                        </div>
-                        <div className="product__content p-relative">
-                          <div className="product__content-inner">
-                            <h4>
-                              <a href="product-details.html">
-                                {item.productName} có {item.productId}
-                              </a>
-                            </h4>
-                            <div className="product__price transition-3">
-                              <span>${item.priceDefault}.00</span>
-                              <span className="old-price">$96</span>
-                            </div>
-                          </div>
-                          <div className="add-cart p-absolute transition-3">
-                            <a href="#">+ Add to Cart</a>
-                          </div>
-                        </div>
-                      </div>
+                      <ProductCard product={item}></ProductCard>
                     </div>
                   </div>
                 );
@@ -163,7 +113,10 @@ const HomePage = () => {
             <div className="row">
               <div className="col-xl-12">
                 <div className="product__load-btn text-center mt-25">
-                  <a href="#" className="os-btn os-btn-3">
+                  <a href="#" className="os-btn os-btn-3" onClick={(e) => {
+                    e.preventDefault();
+                    navigator("/shop");
+                  }}>
                     Load More
                   </a>
                 </div>

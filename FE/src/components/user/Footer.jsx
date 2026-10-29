@@ -10,30 +10,24 @@ const Footer = () => {
               <div className="footer__widget mb-30">
                 <div className="footer__widget-content">
                   <p>
-                    Outstock is a premium Templates theme with advanced admin
-                    module. It’s extremely customizable, easy to use and fully
-                    responsive and retina ready.
+                    Outstock founded with a passion for quality and design, our furniture company specializes in creating modern, functional, and durable interior solutions for homes and businesses.
                   </p>
                   <div className="footer__contact">
                     <ul>
                       <li>
                         <div className="text">
                           <span>
-                            Add: 1234 Heaven Stress, Beverly Hill, Melbourne,
-                            USA.
+                            Add: 
                           </span>
                         </div>
                       </li>
                       <li>
                         <div className="text">
                           <span>
-                            Email:
+                            Email: 
                             <a
-                              href="/cdn-cgi/l/email-protection"
-                              className="__cf_email__"
-                              data-cfemail="43002c2d37222037032122302a20372b262e266d202c2e"
                             >
-                              [email&#160;protected]
+                             2121050524@humg.edu.vn
                             </a>
                           </span>
                         </div>
@@ -114,7 +108,7 @@ const Footer = () => {
               <div className="footer__copyright">
                 <p>
                   Copyright © <a href="index.html">Outstock</a> all rights
-                  reserved. Powered by <a href="index.html">Theme_pure</a>
+                  reserved
                 </p>
               </div>
             </div>

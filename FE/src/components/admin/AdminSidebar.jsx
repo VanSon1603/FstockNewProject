@@ -21,7 +21,13 @@ const AdminSidebar = () => {
   return (
     <div className="navbar-vertical navbar nav-dashboard">
       <div className="h-100" data-simplebar>
-        <a className="navbar-brand" href="../index.html">
+        <a className="navbar-brand" 
+        style={{ cursor: "pointer" }}
+        onClick={(e) => {
+            e.preventDefault();
+            navigator("/");
+          }
+        }>
           <img src={logo} alt="logo" />
         </a>
         <ul className="navbar-nav flex-column" id="sideNavbar">

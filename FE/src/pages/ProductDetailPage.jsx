@@ -97,6 +97,10 @@ const ProductDetailPage = () => {
     if (!user) {
       navigator("/login");
     } else {
+      if (user?.scope?.includes("ROLE_ADMIN")) {
+        toast.error("Admin cannot add to cart");
+        return; 
+      }
       try {
         const data = {
           productId: id,
@@ -145,10 +149,16 @@ const ProductDetailPage = () => {
     };
     createReview(newData);
   };
+
   const createReview = async (newData) => {
-    const response = await createReviewApi(newData);
-    setReview(response.data.data);
+    try {
+      const response = await createReviewApi(newData);
+      setReview(response.data.data);
+    } catch {
+      toast.error("You have to order this product before review or your order is over 30 days");
+    }
   };
+
 
   const handleSetContent = (e) => {
     setContent(e.target.value);

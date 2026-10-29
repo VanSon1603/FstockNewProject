@@ -197,11 +197,6 @@ const AdminAddProductPage = () => {
 
   const handleCreateProduct = async (formData) => {
     try {
-      // Kiểm tra dữ liệu đầu vào
-      if (!formData.imageUrlDisplay || !formData.imageUrlDisplay.length) {
-        toast.error("Vui lòng chọn ảnh chính");
-        throw new Error("Vui lòng chọn ảnh chính");
-      }
       if (!formData.images || !formData.images.length) {
         toast.error("Vui lòng chọn ảnh theo yêu cầu thư viện");
         throw new Error("Vui lòng chọn ít nhất một ảnh thư viện");
@@ -259,7 +254,7 @@ const AdminAddProductPage = () => {
         toast.success(res.data.message || "Tạo sản phẩm thành công");
       }
     } catch (error) {
-      console.error("Lỗi khi tạo sản phẩm:", error); 
+      console.error("Lỗi khi tạo sản phẩm:", error);
       toast.error(
         error.response.data.message || "Có lỗi xảy ra khi tạo sản phẩm"
       );

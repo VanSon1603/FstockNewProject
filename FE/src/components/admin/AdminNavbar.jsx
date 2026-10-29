@@ -1,4 +1,42 @@
+import {useEffect, useContext, useState } from "react";
+import { getInfo } from "../../service/UserService";
+import { toast } from "react-toastify";
+import AuthContext from "../../contexts/AuthContext";
+import { logoutApi } from "../../service/AuthService";
+
+
 const AdminNavbar = () => {
+  const { user } = useContext(AuthContext);
+  const [userData, setUserData] = useState({});
+  const {logout} = useContext(AuthContext);
+
+   useEffect(() => {
+      try {
+        if (user) {
+          const fetchDataUser = async () => {
+            const userData = await getInfo();
+            setUserData(userData.data.data);
+          };
+          fetchDataUser();
+        }
+      } catch (error) {
+        toast.error(error.response.data.message);
+      }
+      console.log("User Data:", userData);
+    }, [user]);
+
+    const handleLogout = () => {  
+        if (user) {
+          logoutApi(localStorage.getItem("authToken"));
+          logout();
+          navigator("/login");
+        }
+      }
+
+      const handleComeBackHome = (event) => {
+        event.preventDefault();
+        navigator("/");
+      };
   return (
     <div className="header">
       <div className="navbar-custom navbar navbar-expand-lg ">
@@ -69,69 +107,31 @@ const AdminNavbar = () => {
                 aria-expanded="false"
               >
                 <div className="avatar avatar-md avatar-indicators avatar-online">
-                  <img
-                    alt="avatar"
-                    src="../assets/images/avatar/avatar-11.jpg"
-                    className="rounded-circle"
-                  />
+                  <img src={userData?.imgUrlDisplay} alt="" className="rounded-circle"
+                  ></img>
                 </div>
               </a>
               <div
                 className="dropdown-menu dropdown-menu-end"
                 aria-labelledby="dropdownUser"
               >
-                <div className="px-4 pb-0 pt-2">
-                  <div className="lh-1">
-                    <h5 className="mb-1">John E. Grainger</h5>
-                    <a href="#!" className="text-inherit fs-6">
-                      View my profile
-                    </a>
-                  </div>
-                  <div className="dropdown-divider mt-3 mb-2"></div>
-                </div>
-
                 <ul className="list-unstyled">
                   <li>
-                    <a
-                      className="dropdown-item d-flex align-items-center"
-                      href="#!"
-                    >
-                      <i
-                        className="me-2 icon-xxs dropdown-item-icon"
-                        data-feather="user"
-                      ></i>
-                      Edit Profile
-                    </a>
-                  </li>
-                  <li>
-                    <a className="dropdown-item" href="#!">
-                      <i
-                        className="me-2 icon-xxs dropdown-item-icon"
-                        data-feather="activity"
-                      ></i>
-                      Activity Log
-                    </a>
-                  </li>
-
-                  <li>
-                    <a
-                      className="dropdown-item d-flex align-items-center"
-                      href="#!"
-                    >
-                      <i
-                        className="me-2 icon-xxs dropdown-item-icon"
-                        data-feather="settings"
-                      ></i>
-                      Settings
-                    </a>
-                  </li>
-                  <li>
-                    <a className="dropdown-item" href="../index.html">
+                    <a className="dropdown-item" onClick={() => handleLogout()}>
                       <i
                         className="me-2 icon-xxs dropdown-item-icon"
                         data-feather="power"
                       ></i>
                       Sign Out
+                    </a>
+                  </li>
+                  <li>
+                    <a className="dropdown-item"  onClick={() => handleComeBackHome()}>
+                      <i
+                        className="me-2 icon-xxs dropdown-item-icon"
+                        data-feather="power"
+                      ></i>
+                      Home
                     </a>
                   </li>
                 </ul>

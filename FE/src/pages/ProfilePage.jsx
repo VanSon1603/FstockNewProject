@@ -18,14 +18,24 @@ export const ProfilePage = () => {
   const { toast } = useContext(ToastContext);
   const [quantity, setQuantity] = useState(0);
   const [userData, setUserData] = useState();
+  const [userUpdated, setUserUpdated] = useState(false);
   const [orderData, setOrderData] = useState();
   const [image, setImage] = useState();
+  const [loading, setLoading] = useState(false);
   const navigator = useNavigate();
+
   const {
-    register,
-    handleSubmit,
-    formState: { errors },
+    register: registerChangePass,
+    handleSubmit: handleSubmitChangePass,
+    formState: { errors: errorsChangePass },
   } = useForm();
+
+  const {
+    register: registerChangeInfo,
+    handleSubmit: handleSubmitChangeInfo,
+    formState: { errors: errorsChangeInfo },
+  } = useForm();
+
   const changePasswordOptions = {
     oldPassword: {
       required: "Old password must not be blank",
@@ -47,9 +57,10 @@ export const ProfilePage = () => {
       },
     },
   };
+
   const changeInfoOptions = {
     userName: {
-      required: "Old password must not be blank",
+      required: "User name must not be blank",
     },
     phone: {
       required: "Phone must not be blank",
@@ -67,6 +78,7 @@ export const ProfilePage = () => {
       },
     },
   };
+
   const statusDescriptions = {
     PENDING: "Đang chờ xác nhận",
     PROCESSING: "Đang xử lý",
@@ -80,7 +92,8 @@ export const ProfilePage = () => {
     RETURNED: "Đã trả hàng",
     CANCELED: "Đã hủy",
   };
-
+  console.log(image)
+  
   useEffect(() => {
     if (cartData) {
       let quantityAll = 0;
@@ -103,7 +116,7 @@ export const ProfilePage = () => {
     } catch (error) {
       toast.error(error.response.data.message);
     }
-  }, [user]);
+  }, [user, userUpdated]);
 
   useEffect(() => {
     try {
@@ -128,7 +141,7 @@ export const ProfilePage = () => {
 
   const onSubmitChangePass = async (data) => {
     try {
-      const res = await changePassword(data);
+      const res = await changePassword(data, userData?.email);
       if (res.status === 200) {
         toast.success(res.data.message);
       }
@@ -145,10 +158,13 @@ export const ProfilePage = () => {
     if (data.imgUrlDisplay.length > 0) {
       formData.append("imgUrlDisplay", data.imgUrlDisplay[0]);
     }
+    setLoading(true);
     try {
       const res = await changeInfo(formData);
       if (res.status === 200) {
         toast.success(res.data.message);
+        setLoading(false);
+        setUserUpdated(!userUpdated);
       }
     } catch (error) {
       toast.error(error.response.data.message);
@@ -157,13 +173,13 @@ export const ProfilePage = () => {
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
-
+    console.log(file);
     if (file) {
       setImage(URL.createObjectURL(file));
     }
   };
 
-  if (!user) {
+  if (!userData || loading) {
     return <Loading></Loading>;
   }
 
@@ -513,19 +529,19 @@ export const ProfilePage = () => {
                       <div className="password__form white-bg">
                         <form
                           action="#"
-                          onSubmit={handleSubmit(onSubmitChangePass)}
+                          onSubmit={handleSubmitChangePass(onSubmitChangePass)}
                         >
                           <div className="password__input">
                             <p>Old Password</p>
-                            {errors.oldPassword && (
+                            {errorsChangePass.oldPassword && (
                               <div style={{ color: "red" }}>
-                                {errors.oldPassword.message}
+                                {errorsChangePass.oldPassword.message}
                               </div>
                             )}
                             <input
                               type="text"
                               placeholder="Enter Old Password"
-                              {...register(
+                              {...registerChangePass(
                                 "oldPassword",
                                 changePasswordOptions.oldPassword
                               )}
@@ -533,15 +549,15 @@ export const ProfilePage = () => {
                           </div>
                           <div className="password__input">
                             <p>New Password</p>
-                            {errors.newPassword && (
+                            {errorsChangePass.newPassword && (
                               <div style={{ color: "red" }}>
-                                {errors.newPassword.message}
+                                {errorsChangePass.newPassword.message}
                               </div>
                             )}
                             <input
                               type="text"
                               placeholder="Enter New Password"
-                              {...register(
+                              {...registerChangePass(
                                 "newPassword",
                                 changePasswordOptions.newPassword
                               )}
@@ -549,15 +565,16 @@ export const ProfilePage = () => {
                           </div>
                           <div className="password__input">
                             <p>Confirm Password</p>
-                            {errors.confirmPassword && (
+                            {errorsChangePass.confirmPassword && (
                               <div style={{ color: "red" }}>
-                                {errors.confirmPassword.message}
+                                {errorsChangePass.confirmPassword.message}
                               </div>
                             )}
+
                             <input
                               type="text"
                               placeholder="Confirm Password"
-                              {...register(
+                              {...registerChangePass(
                                 "confirmPassword",
                                 changePasswordOptions.confirmPassword
                               )}
@@ -603,35 +620,41 @@ export const ProfilePage = () => {
                 </div>
                 <form
                   action="#"
-                  onSubmit={handleSubmit(onSubmitChangeInfo)}
+                  onSubmit={handleSubmitChangeInfo(onSubmitChangeInfo)}
                   className="row"
                 >
                   <div className="col-6">
                     <div className="profile__edit-input">
                       <p>User Name</p>
-                      {errors.userName && (
+                      {errorsChangeInfo.userName && (
                         <div style={{ color: "red" }}>
-                          {errors.userName.message}
+                          {errorsChangeInfo.userName.message}
                         </div>
                       )}
                       <input
                         type="text"
                         placeholder="Your User Name"
-                        {...register("userName", changeInfoOptions.userName)}
+                        {...registerChangeInfo(
+                          "userName",
+                          changeInfoOptions.userName
+                        )}
                       ></input>
                     </div>
 
                     <div className="profile__edit-input">
                       <p>Phone</p>
-                      {errors.phone && (
+                      {errorsChangeInfo.phone && (
                         <div style={{ color: "red" }}>
-                          {errors.phone.message}
+                          {errorsChangeInfo.phone.message}
                         </div>
                       )}
                       <input
                         type="text"
                         placeholder="Your Phone"
-                        {...register("phone", changePasswordOptions.phone)}
+                        {...registerChangeInfo(
+                          "phone",
+                          changePasswordOptions.phone
+                        )}
                       ></input>
                     </div>
                   </div>
@@ -639,11 +662,14 @@ export const ProfilePage = () => {
                     <div>
                       <input
                         type="file"
-                        onChange={handleImageChange}
-                        {...register(
-                          "imgUrlDisplay",
-                          changeInfoOptions.imgUrlDisplay
-                        )}
+                       
+                        {...registerChangeInfo (
+                          "imgUrlDisplay", {
+                          ...changeInfoOptions.imgUrlDisplay,
+                          onChange: (e) => {
+                            handleImageChange(e); // gọi hàm preview ảnh của bạn
+                          },
+                        })}
                       ></input>
 
                       {image && (
@@ -652,7 +678,7 @@ export const ProfilePage = () => {
                             src={image}
                             alt="Preview"
                             style={{
-                              width: "120px",
+                              width: "60px",
                               height: "auto",
                               borderRadius: "8px",
                             }}

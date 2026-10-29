@@ -25,6 +25,7 @@ export const AuthProvider = ({ children }) => {
   const isTokenExpired = async (token) => {
     try {
       const decoded = jwtDecode(token);
+      console.log("Decoded token:", decoded);
       const now = Math.floor(Date.now() / 1000);
       return decoded.exp < now;
     } catch (error) {

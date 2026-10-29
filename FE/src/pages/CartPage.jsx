@@ -68,6 +68,20 @@ const CartPage = () => {
         setUpdatedCart(!updatedCart);
         toast.success("Update cart successfully");
     }
+
+    const handlePay = (e) => {
+        e.preventDefault();
+        if (user.scope?.role == "ROLE_ADMIN") {
+            toast.error("Admin cannot make purchases");
+            return;
+        }
+        if ( !cartData ||cartData.length === 0) {
+            toast.error("Your cart is empty");
+            return;
+        }
+        navigator("/checkout")
+    }
+    console.log("cartData: ", cartData);
     
     return (
         <>
@@ -137,10 +151,7 @@ const CartPage = () => {
                                         <ul className="mb-20">
                                             <li>Total <span>{total}</span></li>
                                         </ul>
-                                        <a className="os-btn" href="checkout.html" onClick={(e) => {
-                                            e.preventDefault();
-                                            navigator("/checkout")
-                                        }}>Pay</a>
+                                        <a className="os-btn" onClick={(e) => handlePay(e)}>Pay</a>
                                     </div>
                                 </div>
                             </div>

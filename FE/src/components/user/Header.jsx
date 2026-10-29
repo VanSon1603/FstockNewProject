@@ -10,12 +10,14 @@ const Header = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const {cartData } = useContext(CartContext);
+  const [productName, setProductName] = useState("");
   const [totalPrice, setTotalPrice] = useState();
   const [quantity, setQuantity] = useState(0);
   const { user } = useContext(AuthContext);
   const { logout } = useContext(AuthContext);
 
   const navigator = useNavigate();
+  console.log("user in header:", user);
 
   
  
@@ -45,6 +47,10 @@ const Header = () => {
       logout();
       navigator("/");
     }
+  }
+  const handleSearch = (event) => {
+    event.preventDefault();
+    navigator(`/shop?search=${productName}`);
   }
 
   const handleNavigateShop = (event) => {
@@ -99,34 +105,13 @@ const Header = () => {
                       <div className="header__search-header">
                         <h3>Search</h3>
                       </div>
-                      <div className="header__search-categories">
-                        <ul className="search-category">
-                          <li>
-                            <a href="shop.html">All Categories</a>
-                          </li>
-                          <li>
-                            <a href="shop.html">Accessories</a>
-                          </li>
-                          <li>
-                            <a href="shop.html">Chair</a>
-                          </li>
-                          <li>
-                            <a href="shop.html">Tablet</a>
-                          </li>
-                          <li>
-                            <a href="shop.html">Men</a>
-                          </li>
-                          <li>
-                            <a href="shop.html">Women</a>
-                          </li>
-                        </ul>
-                      </div>
                       <div className="header__search-input p-relative">
                         <input
                           type="text"
                           placeholder="Search for products... "
+                          onChange={(e) => setProductName(e.target.value)}
                         />
-                        <button type="submit">
+                        <button type="submit" onClick={handleSearch}>
                           <i className="fa-solid fa-magnifying-glass"></i>
                         </button>
                       </div>
@@ -165,11 +150,9 @@ const Header = () => {
                               Shop
                             </a>
                           </li>
+                          
                           <li className="has-dropdown">
-                            <a href="blog.html">Blog</a>
-                          </li>
-                          <li className="has-dropdown">
-                            <a href="shop.html">Pages</a>
+                            <a href="shop.html">About</a>
                           </li>
                           <li className="has-dropdown">
                             <a href="">Contact</a>
@@ -322,6 +305,20 @@ const Header = () => {
                                         navigator("/profile")
                                       )}>My Account</a>
                                     </li>
+                                    {
+                                      user?.scope?.includes("ROLE_ADMIN") && (
+                                        <li>
+                                          <a
+                                            onClick={(e) => {
+                                              e.preventDefault();
+                                              navigator("/admin/home");
+                                            }}
+                                          >
+                                            Admin Home
+                                          </a>
+                                        </li>
+                                      )
+                                    }
                                     </ul>
                                   </div>
                                 </li>

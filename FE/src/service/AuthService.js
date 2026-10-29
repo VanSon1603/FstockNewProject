@@ -1,4 +1,5 @@
 import api from "../api/api";
+
 export const loginAuth = (data) => {
     return api.post(`/auth/token`, { 
         email: data.email, 

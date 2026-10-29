@@ -49,39 +49,38 @@ const AdminProductManagePage = () => {
   };
 
   const handleDeleteProduct = (id, e) => {
-      e.preventDefault();
-      confirmAlert({
-        title: "Confirm to delete",
-        message: "Are you sure to do this.",
-        buttons: [
-          {
-            label: "Yes",
-            onClick: async () => {
-              try {
-                const result = await deleteProduct(id);
-                if (result && result.status === 200) {
-                  toast.success("Delete Category successfully");
-                }
-                setProductUpdate(!productUpdate);
-              } catch (error) {
-                toast.error(error.response?.data?.message || "Delete failed");
+    e.preventDefault();
+    confirmAlert({
+      title: "Confirm to delete",
+      message: "Are you sure to do this.",
+      buttons: [
+        {
+          label: "Yes",
+          onClick: async () => {
+            try {
+              const result = await deleteProduct(id);
+              if (result && result.status === 200) {
+                toast.success("Delete Category successfully");
               }
-            },
+              setProductUpdate(!productUpdate);
+            } catch (error) {
+              toast.error(error.response?.data?.message || "Delete failed");
+            }
           },
-          {
-            label: "No",
-            onClick: () => {},
-          },
-        ],
-      });
-    };
-  
+        },
+        {
+          label: "No",
+          onClick: () => {},
+        },
+      ],
+    });
+  };
+
   if (products.length === 0) {
     return <Loading></Loading>;
   }
 
   return (
-    
     <div id="app-content">
       <div className="app-content-area">
         <div className="container-fluid">
@@ -98,10 +97,14 @@ const AdminProductManagePage = () => {
                 <div className="card">
                   <div className="card-header d-md-flex border-bottom-0">
                     <div className="flex-grow-1">
-                      <a href="#!" className="btn btn-primary" onClick={(e) => {
-                        e.preventDefault();
-                        navigator("/admin/product/create-product");
-                      }}>
+                      <a
+                        href="#!"
+                        className="btn btn-primary"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          navigator("/admin/product/create-product");
+                        }}
+                      >
                         + Add Product
                       </a>
                     </div>
@@ -167,7 +170,6 @@ const AdminProductManagePage = () => {
                       >
                         <thead className="table-light">
                           <tr>
-
                             <th>Product</th>
                             <th>Id</th>
                             <th>Category</th>
@@ -215,10 +217,14 @@ const AdminProductManagePage = () => {
                                     href="#!"
                                     className="btn btn-ghost btn-icon btn-sm rounded-circle texttooltip"
                                     data-template="eyeOne"
-                                    
-                                  
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      navigator(
+                                        `/admin/product/product-variants/${product.productId}`
+                                      );
+                                    }}
                                   >
-                                    <i className="icon-xs bi bi-eye-fill" ></i>
+                                    <i className="icon-xs bi bi-eye-fill"></i>
                                     <div id="eyeOne" className="d-none">
                                       <span>View</span>
                                     </div>
@@ -227,9 +233,11 @@ const AdminProductManagePage = () => {
                                     href="#!"
                                     className="btn btn-ghost btn-icon btn-sm rounded-circle texttooltip"
                                     data-template="editOne"
-                                    onClick={(e)=> {
+                                    onClick={(e) => {
                                       e.preventDefault();
-                                      navigator(`/admin/product/update-product/${product.productId}`);
+                                      navigator(
+                                        `/admin/product/update-product/${product.productId}`
+                                      );
                                     }}
                                   >
                                     <i className="icon-xs bi bi-gear-fill"></i>
@@ -242,7 +250,6 @@ const AdminProductManagePage = () => {
                                     className="btn btn-ghost btn-icon btn-sm rounded-circle texttooltip delete"
                                     data-template="trashOne"
                                     onClick={(e) => {
-                                     
                                       handleDeleteProduct(product.productId, e);
                                     }}
                                   >
@@ -273,7 +280,6 @@ const AdminProductManagePage = () => {
         </div>
       </div>
     </div>
-
   );
 };
 

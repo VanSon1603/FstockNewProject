@@ -37,11 +37,11 @@ public class Product {
 
     @Column(nullable = false)
     private String imageUrlDisplay;
-
+    @Column(nullable = false)
+    private Double averageRatings;
     @ManyToOne
     @JoinColumn(name = "category_id")
     private Category category;
-
 
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "product", orphanRemoval = true)
     private List<Order_Item> orderItems;
@@ -55,7 +55,7 @@ public class Product {
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, mappedBy = "product", orphanRemoval = true)
     private List<ProductImages> productImages;
 
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, mappedBy = "product", orphanRemoval = true)
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "product", orphanRemoval = true)
     private List<Review> reviews;
 
 

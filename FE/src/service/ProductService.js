@@ -1,3 +1,4 @@
+import { da } from "date-fns/locale";
 import api from "../api/api";
 
 export const getAllProducts = (pageNumber, pageSize , search) => {
@@ -9,6 +10,16 @@ export const getAllProducts = (pageNumber, pageSize , search) => {
         }
     }); 
 }
+
+export const getProductTopSelling = (size) => {
+    return api.get(`/products/top-selling`, {
+        params: {
+            size: size
+        }
+    }); 
+}
+
+
 
 export const getProductById = (id) => {
     return api.get(`/products/${id}`); 
@@ -22,7 +33,17 @@ export const getProductByFilter = (filter) => {
             category : filter.category,
             size : filter.size,
             color : filter.color,
+            productName : filter.productName,
+            sortBy : filter.sortBy,
             pageNumber : filter.pageNumber
+        }
+    }); 
+}
+export const getProductVariantById = (data) => {
+    return api.get(`/products/product-variants`, {
+        params: {
+            productId : data.productId,
+            pageNumber : data.pageNumber
         }
     }); 
 }
